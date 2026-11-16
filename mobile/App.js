@@ -7,7 +7,7 @@ const HORIZONS = [1,2,3,4,5,12,24,36,48,60];
 const fmt = (n,c='USD') => new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:2}).format(n);
 export default function App(){
   const [ticker,setTicker]=useState('NVDA'); const [results,setResults]=useState([]); const [searching,setSearching]=useState(false); const [selected,setSelected]=useState('NVDA'); const [quote,setQuote]=useState(null); const [loading,setLoading]=useState(false);
-  const [error,setError]=useState(''); const [units,setUnits]=useState(10); const [months,setMonths]=useState(3); const [annual,setAnnual]=useState(20);
+  const [research,setResearch]=useState(null); const [researchLoading,setResearchLoading]=useState(false); const [error,setError]=useState(''); const [units,setUnits]=useState(10); const [months,setMonths]=useState(3); const [annual,setAnnual]=useState(20);
   async function findCompanies(){
     const q=ticker.trim(); if(!q)return;
     setSearching(true);setError('');setResults([]);
@@ -15,7 +15,8 @@ export default function App(){
     catch(e){setError(e.message);}finally{setSearching(false);}
   }
   async function chooseCompany(item){if(!item.is_public)return;setTicker(item.symbol);setSelected(item.symbol);setResults([]);await load(item.symbol);}
-  async function load(symbolOverride){setLoading(true);setError('');setQuote(null);try{const r=await fetch(`${API}/quote/${String(typeof symbolOverride==='string'?symbolOverride:ticker).trim().toUpperCase()}`);const j=await r.json();if(!r.ok)throw new Error(j.detail||'Quote unavailable');setQuote(j);}catch(e){setError(e.message+' · Check backend URL and network.');}finally{setLoading(false);}}
+  async function loadResearch(symbol){setResearch(null);setResearchLoading(true);try{const r=await fetch(`${API}/research/${encodeURIComponent(symbol)}`);if(r.ok)setResearch(await r.json());}catch(e){}finally{setResearchLoading(false);}}
+  async function load(symbolOverride){setLoading(true);setError('');setQuote(null);try{const r=await fetch(`${API}/quote/${String(typeof symbolOverride==='string'?symbolOverride:ticker).trim().toUpperCase()}`);const j=await r.json();if(!r.ok)throw new Error(j.detail||'Quote unavailable');setQuote(j);loadResearch(j.symbol);}catch(e){setError(e.message+' · Check backend URL and network.');}finally{setLoading(false);}}
   useEffect(()=>{load()},[]);
   const price=quote?.price||0; const future=price*Math.pow(1+annual/100,months/12); const profit=(future-price)*units;
   return <SafeAreaView style={s.root}><StatusBar barStyle="light-content"/><ScrollView contentContainerStyle={s.content}>
@@ -26,16 +27,21 @@ export default function App(){
     {loading?<ActivityIndicator color="#62d8ac"/>:null}{error?<Text style={s.error}>{error}</Text>:null}
     {quote?<><Text style={s.symbol}>{quote.symbol} <Text style={s.price}>{fmt(price,quote.currency)}</Text></Text><Text style={s.meta}>{quote.source} · {quote.quote_type}</Text><Text style={s.meta}>As of: {quote.as_of||'No timestamp (demo)'} · {quote.exchange||'Exchange not supplied'}</Text>{quote.is_demo?<Text style={s.warning}>DEMO PRICE ONLY. NOT A CURRENT MARKET QUOTE.</Text>:null}</>:null}</View>
     <View style={s.card}>
-      <Text style={s.heading}>StockPilot research assessment</Text>
-      <Text style={s.researchStatus}>Not enough evidence for Buy / Hold / Sell</Text>
-      <Text style={s.meta}>A share price alone cannot tell us whether a company is a good investment. Verified financial statements, valuation data and a licensed news feed are not yet connected. StockPilot will not invent a recommendation.</Text>
-      <Text style={s.researchTitle}>What we know now</Text>
-      <Text style={s.meta}>{quote && !quote.is_demo ? `Latest provider quote for ${quote.symbol}: ${fmt(quote.price,quote.currency)} (as of ${quote.as_of||'date unavailable'}). This is a price snapshot, not a valuation.` : 'Select a company to load a quote. Demo prices are not investment evidence.'}</Text>
-      <Text style={s.researchTitle}>What we still need to check</Text>
-      <Text style={s.meta}>{'• Sales, profits and debt\n• Whether the shares are expensive or cheap relative to earnings\n• Company news, leadership and regulation\n• Oil, interest rates, wars and other relevant risks'}</Text>
-      <Text style={s.researchTitle}>How future signals will work</Text>
-      <Text style={s.meta}>Attractive means worth researching further. Watch means mixed evidence. Caution means significant concerns. None is a guarantee or an instruction to trade.</Text>
-      <Text style={s.warning}>Live news-driven ratings are not available yet. No headlines or confidence scores are fabricated.</Text>
+      <Text style={s.heading}>StockPilot Evidence Passport</Text>
+      {researchLoading?<ActivityIndicator color="#62d8ac"/>:null}
+      <Text style={s.researchStatus}>{research?.assessment==='INSUFFICIENT_EVIDENCE'?'Research signal: Not enough evidence':'Research signal: Pending verification'}</Text>
+      <Text style={s.meta}>{research?.reason||'Select a company to load its research evidence.'}</Text>
+      {research?<><Text style={s.researchTitle}>Evidence we have</Text>
+      {(research.evidence||[]).map((e,i)=><View key={i} style={s.result}><Text style={s.resultTitle}>{e.category.replace(/_/g,' ')}</Text><Text style={s.meta}>{e.source} · {e.as_of||'Date not provided'}</Text><Text style={s.meta}>{e.note}</Text></View>)}
+      <Text style={s.researchTitle}>What is still missing</Text>
+      {(research.missing||[]).map((item,i)=><Text key={i} style={s.meta}>• {item}</Text>)}
+      <Text style={s.researchTitle}>Recent sourced headlines (not scored)</Text>
+      {(research.news||[]).length===0?<Text style={s.meta}>No verified news feed available.</Text>:(research.news||[]).map((n,i)=><Text key={i} style={s.meta}>{n.title} · {n.publisher} · {n.published_at||'Date unknown'} · {n.url}</Text>)}
+      <Text style={s.researchTitle}>Audit details</Text>
+      <Text style={s.meta}>Model: {research.model_version} · Generated: {research.generated_at}</Text>
+      <Text style={s.meta}>Evidence fingerprint: {research.evidence_fingerprint}</Text>
+      <Text style={s.meta}>Historical performance: Not validated. No accuracy claims.</Text></>:null}
+      <Text style={s.warning}>StockPilot does not issue Buy / Hold / Sell ratings without independently verified financials, valuation, news context and historical validation.</Text>
     </View>
     <View style={s.card}><Text style={s.heading}>Scenario calculator</Text><Text style={s.label}>Shares</Text><View style={s.row}>{[1,10].map(n=><TouchableOpacity key={n} style={[s.chip,units===n&&s.active]} onPress={()=>setUnits(n)}><Text style={s.chipText}>{n} share{n===1?'':'s'}</Text></TouchableOpacity>)}</View>
     <Text style={s.label}>Time horizon</Text><View style={s.wrap}>{HORIZONS.map(n=><TouchableOpacity key={n} style={[s.chip,months===n&&s.active]} onPress={()=>setMonths(n)}><Text style={s.chipText}>{n<12?`${n}M`:`${n/12}Y`}</Text></TouchableOpacity>)}</View>
