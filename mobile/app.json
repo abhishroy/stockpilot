@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "StockPilot",
+    "slug": "stockpilot",
+    "scheme": "stockpilot",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stockpilot.research"
+    },
+    "android": {
+      "package": "com.stockpilot.research"
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}
