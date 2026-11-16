@@ -39,7 +39,7 @@ jobs:
       - name: Build website
         working-directory: mobile
         env:
-          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://stockpilot-idmk.onrender.com' }}
         run: npx expo export --platform web
 
       - name: Disable Jekyll for Expo assets
