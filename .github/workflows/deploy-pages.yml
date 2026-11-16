@@ -40,7 +40,7 @@ jobs:
         working-directory: mobile
         env:
           EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
-        run: npx expo export --platform web --base-url /stockpilot
+        run: npx expo export --platform web
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
