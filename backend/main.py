@@ -7,6 +7,7 @@ import json
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from research import research as build_research
 
 app = FastAPI(title='StockPilot API', version='0.1.0')
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv('CORS_ORIGINS','http://localhost:8081,https://abhishroy.github.io').split(','), allow_methods=['GET'], allow_headers=['*'])
@@ -61,3 +62,14 @@ def search(q: str = Query(min_length=1, max_length=80)):
 def scenario(price: float = Query(gt=0), units: int = Query(ge=1, le=100000), annual_return: float = Query(ge=-99, le=300), months: int = Query(ge=1, le=120)):
     future_price = price * (1 + annual_return / 100) ** (months / 12)
     return {'initial_value': round(price * units, 2), 'future_value': round(future_price * units, 2), 'gain_loss': round((future_price - price) * units, 2), 'future_price': round(future_price, 2), 'months': months, 'units': units, 'assumption_annual_return_pct': annual_return, 'disclaimer': 'Hypothetical scenario, not a forecast. Excludes fees, taxes, dividends and FX.'}
+
+@app.get('/research/{symbol}')
+def research_endpoint(symbol: str):
+    symbol = symbol.strip().upper()
+    if not symbol.isalnum() or len(symbol) > 12:
+        raise HTTPException(400, 'Invalid ticker')
+    try:
+        q = quote(symbol)
+    except HTTPException:
+        q = None
+    return build_research(symbol, q)
