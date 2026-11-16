@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 
-const API = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+const API = process.env.EXPO_PUBLIC_API_URL || 'https://stockpilot-idmk.onrender.com';
 const HORIZONS = [1,2,3,4,5,12,24,36,48,60];
 const fmt = (n,c='USD') => new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:2}).format(n);
 export default function App(){
