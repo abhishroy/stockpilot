@@ -33,6 +33,16 @@ export default function App(){
       <Text style={s.meta}>{research?.reason||'Select a company to load its research evidence.'}</Text>
       {research?<><Text style={s.researchTitle}>Evidence we have</Text>
       {(research.evidence||[]).map((e,i)=><View key={i} style={s.result}><Text style={s.resultTitle}>{e.category.replace(/_/g,' ')}</Text><Text style={s.meta}>{e.source} · {e.as_of||'Date not provided'}</Text><Text style={s.meta}>{e.note}</Text></View>)}
+      {research.financials?<View style={s.result}>
+        <Text style={s.researchTitle}>Company financials (reported figures)</Text>
+        <Text style={s.meta}>These numbers come from the company's financial statement through FMP, not from a StockPilot prediction.</Text>
+        <Text style={s.resultTitle}>Revenue: {research.financials.revenue == null?'Not available':fmt(Number(research.financials.revenue),research.financials.reported_currency||'USD')}</Text>
+        <Text style={s.meta}>Revenue means the total money the company earned from selling its products and services.</Text>
+        <Text style={s.resultTitle}>Net income: {research.financials.net_income == null?'Not available':fmt(Number(research.financials.net_income),research.financials.reported_currency||'USD')}</Text>
+        <Text style={s.meta}>Net income is the profit remaining after the company's expenses and taxes.</Text>
+        <Text style={s.meta}>Reporting period: {research.financials.period||'Unknown'} · Financial year: {research.financials.fiscal_year||'Unknown'} · Filed: {research.financials.filing_date||'Date unavailable'}</Text>
+        <Text style={s.warning}>Source: FMP (secondary data provider). Figures must be checked against company filings before treating them as verified.</Text>
+      </View>:null}
       <Text style={s.researchTitle}>What is still missing</Text>
       {(research.missing||[]).map((item,i)=><Text key={i} style={s.meta}>• {item}</Text>)}
       <Text style={s.researchTitle}>Recent sourced headlines (not scored)</Text>
