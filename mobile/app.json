@@ -15,6 +15,9 @@
     },
     "plugins": [
       "expo-status-bar"
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/stockpilot"
+    }
   }
 }
