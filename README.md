@@ -42,3 +42,16 @@ pytest -q
 - Secure hosted API, app signing, TestFlight and licensing/compliance review
 
 **Safety:** Scenario outputs are user-controlled mathematical examples, not predictive investment advice. This project does not execute trades. Never put provider secrets into `EXPO_PUBLIC_*` variables.
+
+
+## Evidence-first research (preview)
+
+The public web app displays an Evidence Passport for the selected symbol. The API endpoint is `GET /research/{symbol}`. It collects the latest available market quote (Twelve Data), optional secondary-source financial statements and recent headlines (Financial Modeling Prep), and explicitly lists unavailable evidence. It **does not issue a Buy/Hold/Sell recommendation** or claim measured predictive accuracy.
+
+Configure `TWELVE_DATA_API_KEY` and, optionally, `FMP_API_KEY` in the **Render backend environment**. Do not add API keys to Expo `EXPO_PUBLIC_*` variables, GitHub Pages, or commits. Redeploy Render after updating environment variables. Financial Modeling Prep endpoint availability depends on the account plan.
+
+The Evidence Passport contains a SHA-256 fingerprint of the returned assessment, a model version and timestamp. The fingerprint is not an independent audit, signature, immutable storage or proof that a prediction is accurate. Financial figures from aggregators must be reconciled against official issuer filings. Headlines are context only and are not automatically interpreted as causal market impacts.
+
+To run backend tests locally: `cd backend && python -m pytest -q`.
+
+**Before actionable ratings:** validate financial and news licensing, official filing verification, evaluation without look-ahead bias, out-of-sample performance, durable append-only assessment history, and applicable EU/NL financial recommendation requirements. No validated historical returns or recommendation success rate currently exist.
