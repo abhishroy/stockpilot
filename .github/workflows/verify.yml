@@ -9,7 +9,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r backend/requirements.txt
-      - run: cd backend && pytest -q
+      - run: python -m pytest -q
+        working-directory: backend
   mobile:
     runs-on: ubuntu-latest
     defaults:
