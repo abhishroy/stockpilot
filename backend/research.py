@@ -5,6 +5,9 @@ import os
 from datetime import datetime, timezone
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
+from xml.etree import ElementTree
+from email.utils import parsedate_to_datetime
+from datetime import timedelta
 
 FMP = "https://financialmodelingprep.com/stable"
 MODEL_VERSION = "research-0.2"
@@ -43,6 +46,46 @@ def safe_news(items, symbol):
         if len(results) == 5:
             break
     return results
+
+def fetch_news_rss(symbol):
+    """Public Google News RSS search fallback; links and timestamps only, no article scraping."""
+    queries = {
+        "NVDA": 'NVIDIA OR "Jensen Huang" OR "Colette Kress"',
+    }
+    term = queries.get(symbol, f'"{symbol}" stock')
+    url = "https://news.google.com/rss/search?" + urlencode({
+        "q": term + " when:7d", "hl": "en-US", "gl": "US", "ceid": "US:en"
+    })
+    try:
+        req = Request(url, headers={"User-Agent": "StockPilot/0.2 (research news headlines)"})
+        with urlopen(req, timeout=8) as resp:
+            body = resp.read(350000)
+        root = ElementTree.fromstring(body)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        results = []
+        for item in root.findall("./channel/item"):
+            title = (item.findtext("title") or "").strip()
+            link = (item.findtext("link") or "").strip()
+            date = (item.findtext("pubDate") or "").strip()
+            source = item.find("source")
+            publisher = (source.text or "").strip() if source is not None and source.text else "Google News indexed source"
+            try:
+                published = parsedate_to_datetime(date).astimezone(timezone.utc)
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if published < cutoff or published > datetime.now(timezone.utc) + timedelta(hours=1):
+                continue
+            parsed = urlparse(link)
+            if parsed.scheme != "https" or not parsed.netloc or not title:
+                continue
+            results.append({"title": title[:250], "url": link, "publisher": publisher[:100],
+                            "published_at": published.isoformat(), "impact": "Not independently assessed",
+                            "source": "Google News RSS (discovery; publisher verification required)"})
+            if len(results) >= 10:
+                break
+        return results, None
+    except Exception:
+        return [], "News RSS provider unavailable"
 
 def number(value):
     """Reject missing, malformed and non-finite provider numbers."""
@@ -113,8 +156,12 @@ def research(symbol, quote_data):
         missing.append("Financial statements" + (": " + err if err else ""))
     news_data, news_err = fetch_fmp("stock-news", {"symbols": symbol, "limit": 5})
     news = safe_news(news_data or [], symbol)
+    if not news:
+        news, rss_error = fetch_news_rss(symbol)
+        if not news:
+            news_err = rss_error or news_err
     if news:
-        evidence.append({"category": "news_headlines", "source": "FMP (aggregator)",
+        evidence.append({"category": "news_headlines", "source": "FMP or Google News RSS (discovery, not verified)",
                          "as_of": now, "value": len(news),
                          "note": "Headlines are unverified context; no automated sentiment or causal impact inferred"})
     else:
