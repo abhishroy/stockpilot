@@ -43,6 +43,21 @@ export default function App(){
         <Text style={s.meta}>Reporting period: {research.financials.period||'Unknown'} · Financial year: {research.financials.fiscal_year||'Unknown'} · Filed: {research.financials.filing_date||'Date unavailable'}</Text>
         <Text style={s.warning}>Source: FMP (secondary data provider). Figures must be checked against company filings before treating them as verified.</Text>
       </View>:null}
+      {research.analysis?<View style={s.result}>
+        <Text style={s.researchTitle}>How expensive is this company?</Text>
+        <Text style={s.meta}>Market value: {research.analysis.market_cap==null?'Not available':fmt(research.analysis.market_cap,quote?.currency||'USD')}</Text>
+        <Text style={s.meta}>Price compared with yearly profit: {research.analysis.market_cap_to_annual_net_income==null?'Not available':research.analysis.market_cap_to_annual_net_income+' times'}. This compares the total market value with reported annual profit, not whether the stock will rise.</Text>
+        <Text style={s.researchTitle}>How much does the company owe?</Text>
+        <Text style={s.meta}>Total debt: {research.analysis.total_debt==null?'Not available':fmt(research.analysis.total_debt,research.financials?.reported_currency||'USD')}</Text>
+        <Text style={s.meta}>Cash available: {research.analysis.cash==null?'Not available':fmt(research.analysis.cash,research.financials?.reported_currency||'USD')}</Text>
+        <Text style={s.meta}>Debt compared with shareholder equity: {research.analysis.debt_to_equity==null?'Not available':research.analysis.debt_to_equity+' times'}</Text>
+        <Text style={s.meta}>Balance sheet date: {research.analysis.balance_sheet_date||'Not provided'}</Text>
+        <Text style={s.warning}>Provider figures only. Not independently checked against company filings. These numbers are not a Buy or Sell signal.</Text>
+      </View>:null}
+      <Text style={s.researchTitle}>Economic and world events</Text>
+      <Text style={s.meta}>Verified company-specific economic and geopolitical analysis is not available yet. Interest rates, industry conditions and global events can change stock prices. StockPilot will not guess their impact.</Text>
+      <Text style={s.researchTitle}>How accurate are past signals?</Text>
+      <Text style={s.meta}>Not tested yet. We cannot claim an accuracy rate or show invented backtest results.</Text>
       <Text style={s.researchTitle}>What is still missing</Text>
       {(research.missing||[]).map((item,i)=><Text key={i} style={s.meta}>• {item}</Text>)}
       <Text style={s.researchTitle}>Recent sourced headlines (not scored)</Text>
