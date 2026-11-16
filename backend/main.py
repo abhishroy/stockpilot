@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 app = FastAPI(title='StockPilot API', version='0.1.0')
-app.add_middleware(CORSMiddleware, allow_origins=os.getenv('CORS_ORIGINS','http://localhost:8081').split(','), allow_methods=['GET'], allow_headers=['*'])
+app.add_middleware(CORSMiddleware, allow_origins=os.getenv('CORS_ORIGINS','http://localhost:8081,https://abhishroy.github.io').split(','), allow_methods=['GET'], allow_headers=['*'])
 
 DEMO = {'NVDA': 163.0, 'AAPL': 200.0, 'MSFT': 400.0, 'ASML': 900.0}
 
